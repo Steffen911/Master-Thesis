@@ -1,0 +1,69 @@
+\chapter{Introduction and Motivation}
+\label{ch:introduction}
+
+Taxonomy matching, a particular case of ontology matching, is a recurring topic among researchers.
+Numerous novel approaches are tested in this domain and some achieve surprising results.
+Yet, most of them are applied to artificial datasets that do not represent the real world.
+In general, the goal of taxonomy matching is to create an alignment between two distinct categorization systems, e.g.,
+the taxonomy of a library and a book shop.
+Although they may sell the same products, they probably use different approaches to catalog them.
+The outputs of the taxonomy matching algorithm create a semantic bridge between the labels used by both stores.
+
+The Ontology Alignment Evaluation Initiative\footnote{\url{http://oaei.ontologymatching.org}. Accessed: 01.05.2020} (OAEI)
+exists since 2004 and publishes an ever-increasing number of datasets that can be used for the evaluation
+and comparison of ontology alignment algorithms.
+Contributions leveraging those datasets are numerous and are presented at the International
+Semantic Web Conference\footnote{\url{https://iswc2020.semanticweb.org}. Accessed: 01.05.2020}.
+The existence of the OAEI establishes a need for large, real-world ontology matching datasets
+that challenge researchers and enable the development of new ontology alignment methods.
+
+The Web Data Commons\footnote{\url{http://www.webdatacommons.org}. Accessed: 01.05.2020} (WDC)
+project shows that an  increasing number of e-commerce websites annotate their pages semantically
+using schema.org and other shared vocabularies.
+These make a given webpage understandable to a machine and enable comparability of information across
+different domains.
+As a result, a large corpus of product information with annotated categories/classes that embody
+real-world taxonomies is available to everyone.
+Moreover, the Semantic Web offers a vast corpus for the ontology matching  task.
+Each  website may use its own  dedicated taxonomy.
+This presents us with a possibly large, real-world dataset that we can use for the evaluation of taxonomy
+matching algorithms.
+
+Avesani et al.\@~\cite{avesani2005large} as well as Angerman and Ramzan~\cite{angermann2017taxonomy} identify the
+necessity of large-scale taxonomy matching datasets that represent the real-world.
+They state that most researchers use small or artificial datasets and that there is no agreed-upon reference dataset.
+Angerman and Ramzan explicitly express the need for freely available, large-scale datasets.
+
+Hence, it is the goal of this Thesis to investigate if the semantic annotations can be leveraged to create an
+evaluation dataset for ontology matching tasks that stems from publicly available data.
+In this Thesis, we will create a gold standard of labelled class pairs that are part of multiple,
+distinct, real-world taxonomies and evaluate numerous taxonomy matching algorithms on this gold standard.
+The alignment tasks that the OAEI focuses on are mainly concerned with closest match problems.
+Instead, we build on the ideas of Giunchiglia et al.\@~\cite{giunchiglia2005semantic} and provide semantic labels.
+They predict not only equality of classes, but also if one class is more general than the other.
+This could enable improvements in product search on pages that feature results from multiple distinct pages,
+e.g., price-comparison sites, by enabling customers to broaden or focus their search more efficiently.
+It could also help in the task of catalog integration, as discussed in Meusel et al.\@~\cite{meusel2015exploiting}
+and Sabou et al.\@~\cite{sabou2008exploring}.
+Instead of putting all products under the closest class in a target taxonomy, the need for an additional
+layer may become apparent and, therefore, improve the overall result.
+We also review and categorize relevant literature with a special focus on e-commerce taxonomy matching.
+Our main contributions are:
+\begin{itemize}
+    \item an overview of relevant taxonomy matching literature,
+    \item the creation of a realistic gold standard for semantic taxonomy matching in the e-commerce domain, and
+    \item an evaluation of product taxonomy matching algorithms on a real-world dataset.
+\end{itemize}
+
+The rest of this Thesis is structured as follows.
+Chapter~\ref{ch:relevant-concepts} introduces the fundamentals of this Thesis.
+Hence, the Semantic Web and taxonomy matching are defined.
+It  also definitions that we will use throughout this Thesis.
+We review relevant contributions from current research in Chapter~\ref{ch:related-work}.
+There, we present contributions in the field of the Semantic Web and different taxonomy matching approaches.
+In the fourth Chapter, the creation of our gold standard is outlined.
+We describe the methods that are evaluated on the gold standard in Chapter~\ref{ch:taxonomy-matching}
+and evaluate the results in Chapter~\ref{ch:experiment-results}.
+Chapter~\ref{ch:error-analysis} includes an analysis of the errors that individual methods make in the prediction.
+Finally, Chapter~\ref{ch:summary} summarizes our results and gives an outlook into possible
+future work.

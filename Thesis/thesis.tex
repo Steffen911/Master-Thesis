@@ -1,0 +1,37 @@
+% do not change these two lines (this is a hard requirement
+% there is one exception: you might replace oneside by twoside in case you deliver 
+% the printed version in the accordant format
+\documentclass[11pt,titlepage,oneside,openany]{book}
+\usepackage{times}
+
+\include{header}
+\begin{document}
+\pagenumbering{roman}
+\include{title}
+\tableofcontents
+\newpage
+% \listofalgorithms
+\listoffigures
+\listoftables
+\include{glossary}
+% \listtheorems{definition}
+% \listtheorems{proposition}
+\newpage
+\pagenumbering{arabic}
+
+% import the content
+\include{chapter/introduction}
+\include{chapter/relevant-concepts}
+\include{chapter/related-work}
+\include{chapter/dataset-generation}
+\include{chapter/taxonomy-matching}
+\include{chapter/experiment-results}
+\include{chapter/error-analysis}
+\include{chapter/summary}
+
+\bibliographystyle{plain}
+\bibliography{thesis}
+
+\newpage
+\include{erklaerung}
+\end{document}

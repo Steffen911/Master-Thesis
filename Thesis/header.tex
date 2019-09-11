@@ -1,0 +1,56 @@
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+
+\usepackage{booktabs}% http://ctan.org/pkg/booktabs
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\usepackage{ntheorem}
+
+% \usepackage{paralist}
+\usepackage{tabularx}
+
+% this packaes are useful for nice algorithms
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% well, when your work is concerned with definitions, proposition and so on, we suggest this
+% feel free to add Corrolary, Theorem or whatever you need
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+
+% its always useful to have some shortcuts (some are specific for algorithms
+% if you do not like your formating you can change it here (instead of scanning through the whole text)
+\renewcommand{\algorithmiccomment}[1]{\ensuremath{\rhd} \textit{#1}}
+\def\MYCALL#1#2{{\small\textsc{#1}}(\textup{#2})}
+\def\MYSET#1{\scshape{#1}}
+\def\MYAND{\textbf{ and }}
+\def\MYOR{\textbf{ or }}
+\def\MYNOT{\textbf{ not }}
+\def\MYTHROW{\textbf{ throw }}
+\def\MYBREAK{\textbf{break }}
+\def\MYEXCEPT#1{\scshape{#1}}
+\def\MYTO{\textbf{ to }}
+\def\MYNIL{\textsc{Nil}}
+\def\MYUNKNOWN{ unknown }
+% simple stuff (not all of this is used in this examples thesis
+\def\INT{{\mathcal I}} % interpretation
+\def\ONT{{\mathcal O}} % ontology
+\def\SEM{{\mathcal S}} % alignment semantic
+\def\ALI{{\mathcal A}} % alignment
+\def\USE{{\mathcal U}} % set of unsatisfiable entities
+\def\CON{{\mathcal C}} % conflict set
+\def\DIA{\Delta} % diagnosis
+% mups and mips
+\def\MUP{{\mathcal M}} % ontology
+\def\MIP{{\mathcal M}} % ontology
+% distributed and local entities
+\newcommand{\cc}[2]{\mathit{#1}\hspace{-1pt} \# \hspace{-1pt} \mathit{#2}}
+\newcommand{\cx}[1]{\mathit{#1}}
+% complex stuff
+\def\MER#1#2#3#4{#1 \cup_{#3}^{#2} #4} % merged ontology
+\def\MUPALL#1#2#3#4#5{\textit{MUPS}_{#1}\left(#2, #3, #4, #5\right)} % the set of all mups for some concept
+\def\MIPALL#1#2{\textit{MIPS}_{#1}\left(#2\right)} % the set of all mips

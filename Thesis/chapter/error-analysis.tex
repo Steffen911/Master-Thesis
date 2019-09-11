@@ -1,0 +1,728 @@
+\chapter{Error Analysis and Discussion}
+\label{ch:error-analysis}
+
+In this Chapter, we will analyse the experimental results we presented in the previous Chapter.
+We look at specific errors the model makes, give examples, and discuss the results.
+Again, we start with the baseline models, continue with the WordNet-based algorithms, and conclude with the supervised
+methods.
+
+For each algorithm, we will first name the different types of errors and provide a hypothesis on the root-cause of those.
+Then, we will give example predictions that support our hypothesis or allow us to reject it.
+Finally, we name scenarios in which the algorithm may prove useful.
+
+\section{Baseline Methods}
+
+\subsection{Levenshtein- or Edit-Similarity}
+
+We saw that the Levenshtein-similarity is good at predicting equality for pairs that are actually \emph{equal}, but also assigned
+an \emph{equal} label to many \emph{disjoint} pairs.
+Our first assumption, therefore, is that two classes which are \emph{disjoint}, but have a very similar path, e.g., due to
+common categories in their class-label.
+We would also like to remind the reader that we generated negative corner-cases with a layout that provokes
+errors like this.
+See the description in Section~\ref{sec:corner-cases} for all details.
+Further, we assume that the false positives for \emph{contains} and \emph{contained-in} stem from the same problem.
+A third hypothesis is that minor changes in the category order or wording may make a major difference during the prediction.
+Now, we will look at each of the three hypotheses in turn and give examples.
+
+The first one is the effect of our generated edge-cases on the \emph{disjoint} labels that were labelled as \emph{equal}.
+Two examples of predictions that support this hypothesis are given in Table~\ref{tab:levenshtein-error1}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label\\
+            \hline
+            left & TV \& Home Theater $>$ TV \& Home Theater Accessories $>$ TV Antennas \\
+            right & TV \& Home Theater $>$ TV \& Home Theater Accessories $>$ Remote Controls \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Boys $>$ Clothing $>$ Shorts \\
+            right & Clothing, Shoes \& Jewelry $>$ Boys $>$ Clothing $>$ Jeans \\
+        \end{tabularx}
+        \caption{Levenshtein: Examples for False Positive Equal Predictions on Corner-Cases.}
+        \label{tab:levenshtein-error1}
+    \end{center}
+\end{table}
+Actually, we were not able to find an example of a generated corner-case that was labelled correctly as \emph{disjoint}.
+
+Instead, the \emph{disjoint} labels that were detected by the Levenshtein-similarity are rather obvious.
+We give a representative example in Table~\ref{tab:levenshtein-error2}.
+The pair consists of a clothing product and something in the electronics domain.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label\\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Men $>$ Clothing $>$ Swim $>$ Briefs \\
+            right & Cell Phones $>$ Cellphone Accessories $>$ Bluetooth Headsets \\
+        \end{tabularx}
+        \caption{Levenshtein: Correctly Classified Disjoint Pair.}
+        \label{tab:levenshtein-error2}
+    \end{center}
+\end{table}
+
+Our second assumption is that the corner-case issue extends to the two other positive labels.
+Examples are given in Table~\ref{tab:levenshtein-error3}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label\\
+            \hline
+            left & Electronics $>$ Home Audio $>$ Speakers $>$ Center-Channel Speakers \\
+            right & Electronics $>$ Home Audio $>$ Speakers $>$ Subwoofers \\
+            \hline
+            left & Electronics $>$ Portable Audio $>$ Portable Audio \\
+            right & Electronics $>$ Portable Audio $>$ Radios \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Men $>$ Clothing $>$ Fashion Hoodies \& Sweatshirts \\
+            right & Clothing, Shoes \& Jewelry $>$ Men $>$ Clothing $>$ Jackets \& Coats \\
+        \end{tabularx}
+        \caption{Levenshtein: Examples for False Positive Contains and Contained-In Predictions on Corner-Cases.}
+        \label{tab:levenshtein-error3}
+    \end{center}
+\end{table}
+In the left class-label of the second example, we see another problem with taxonomies crawled from the Semantic Web.
+Sometimes they contain duplicates in the hierarchy string.
+Zhang and Paramita~\cite{zhang2019product} tried to find a good cleaning and normalization algorithm to reduce this type
+of duplication, but found that this is counterproductive to the actual matching, because it also removes subtle differences
+that are important for the classification.
+
+Next, we will take a look at the misclassifications among the positive labels.
+Examples are shown in Table~\ref{tab:levenshtein-error3}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Cameras \& Camcorders $>$ Digital Cameras $>$ Mirrorless Cameras \\
+            right & Electronics $>$ Cameras \& Camcorders $>$ Mirrorless Cameras \\
+            \hline
+            left & Home $>$ Apparel \& Accessories $>$ Watches $>$ Watches $>$ Tissot \\
+            right & Jewelry $>$ Watches $>$ Luxury Watches $>$ Tissot Watches \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Women $>$ Clothing $>$ Coats, Jackets \& Vests \\
+            right & Clothing $>$ Womens Clothing $>$ Womens Coats \& Jackets \\
+            \hline
+            left & Sports \& Outdoors $>$ Sports \& Fitness $>$ Golf \\
+            right & Sports \& Outdoors $>$ Sports $>$ Golf Equipment $>$ Golf Shirts \\
+        \end{tabularx}
+        \caption{Levenshtein: Examples for Misclassifications among Positive Labels.}
+        \label{tab:levenshtein-error4}
+    \end{center}
+\end{table}
+The first example illustrates how the addition of an intermediate level may change the interpretation completely.
+The actual label should be \emph{equal}, but Levenshtein predicted that the left class-label is \emph{contained-in} the right class-label.
+In the third example, "Vests" where added as a composite category.
+Therefore, the actual label should be \emph{contained-in}, but due to the high similarity that those two labels still have,
+Levenshtein predicts this pair to  be \emph{equal}.
+The problems with composite categories were identified by Aanen et al.\@~\cite{aanen2012schema} during the development
+of the SCHEMA algorithm.
+
+Overall the Levenshtein-similarity tends to predict a positive label if there is a slight resemblance between the two
+class-labels.
+On the other hand, it has problems with composite categories, where the order does not change the semantic meaning,
+but the layout of the string.
+The Levenshtein-similarity is not useful as a standalone taxonomy matcher, and due to the large number of false positives,
+it also does not ease the task of a human annotator significantly.
+
+\subsection{N-Gram-Similarity}
+
+Our second baseline method is the N-Gram-similarity, which achieved the best F1-score for the \emph{equal} label and a comparatively
+high score for \emph{contains}.
+In the prediction of the \emph{contained-in} class-label pairs, it is among the worst performers.
+In this Section, we will cover plausible explanations for those results.
+
+The high precision on the \emph{equal} pairs combined with a good recall indicates that the N-Gram-similarity is good at detecting \emph{equal}
+labels without misclassifying other pairs as \emph{equal}.
+One issue that we have detected for the Levenshtein-similarity is the ordering of categories in the hierarchy and especially
+in composite categories.
+"Clothing \& Jewelry" and "Jewelry \& Clothing" are very different according to the Levenshtein-similarity, but due to
+the set-based nature, the N-Gram-similarity does not care about the order.
+It would only detect minor differences around the start, the end, and around the ampersand.
+Hence, our first assumption is that the N-Gram-similarity handles composite categories better than Levenshtein-similarity.
+This would explain the good recall.
+
+A reason for the high precision on the \emph{equal} class-label pairs, i.e., the  low number of false positives, may be
+explained by the high number of false positives for the other two positive labels.
+Again, they may stem from the generated corner-cases and, if we check for containment there, we get a complete
+intersection of the sets of N-Grams and normalize afterwards.
+Those cases use a weak spot in our implementation of the string-based similarity measures, because we assume that one
+class $A$ is more general than another class $B$, if $A$ is very similar to $B$ without $B$'s last category.
+Therefore, the second assumption is that generated corner-cases are labelled as either \emph{contains} or \emph{contained-in},
+actual \emph{disjoint} class-label pairs are labelled as such, and only a small number of actual \emph{disjoint}s receive an \emph{equal}
+label.
+This hypothesis also covers the large number of false positives that we observe for the \emph{contained-in} label.
+
+To support the first hypothesis, we will look at classes with composite categories that were misclassified by the
+Levenshtein-similarity and check what the N-Gram-similarity predicted.
+Of the four examples presented in Table~\ref{tab:levenshtein-error4} the first three are predicted correctly, and only
+the last one receives a wrong label by the N-Gram-similarity.
+Instead of correctly labelling this pair as \emph{contains}, both methods predict equality.
+
+Next, we focus on the large number of \emph{disjoint} class-label pairs that received a \emph{contained-in} label.
+Examples are given in Table~\ref{tab:ngram-error1}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Home $>$ Apparel \& Accessories $>$ Watches $>$ Watches $>$ Pulsar \\
+            right & Home $>$ Apparel \& Accessories $>$ Watches $>$ Watches $>$ Anne Klein \\
+            \hline
+            left & Sports \& Outdoors $>$ Sports $>$ Golf Equipment $>$ Golf Clothing \\
+            right & Sports \& Outdoors $>$ Sports $>$ Golf Equipment $>$ Golf Shirts \\
+            \hline
+            left & Electronics $>$ Home Audio $>$ Speakers $>$ Surround Sound Systems \\
+            right & Electronics $>$ Home Audio $>$ Speakers $>$ Floorstanding Speakers \\
+        \end{tabularx}
+        \caption{N-Gram: Examples for Disjoint Pairs Labelled as Contained-in.}
+        \label{tab:ngram-error1}
+    \end{center}
+\end{table}
+We could present hundreds of examples that follow this scheme.
+Given our implementation, we can also explain the affinity for the \emph{contained-in} label over the \emph{contains} label.
+We compute a similarity score for each positive label and use the maximum value for the prediction if it exceeds a
+given threshold.
+If there is a draw, \emph{equal} is picked over \emph{contained-in} and \emph{contained-in} over \emph{contains}.
+Hence, almost all artificial corner-cases are labelled as \emph{contained-in}, because the N-Gram-similarity is equal for
+\emph{contains} and \emph{contained-in} and higher as the prediction for \emph{equal}.
+We could add a condition to return \emph{disjoint} if this case occurs.
+
+With this additional condition, we achieve the following results.
+The new confusion matrix is given in Table~\ref{tab:ngram-experiment-cm} and the precision, recall, and F1-scores
+are given in Table~\ref{tab:ngram-experiment-evaluation} for each label.
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{r|cccc}
+            & e & c & ci & d \\
+            \hline
+            e & 101 & 71 & 43 & 26 \\
+            c & 32 & 92 & 65 & 68 \\
+            ci & 30 & 89 & 74 & 48 \\
+            d & 28 & 257 & 113 & 4647 \\
+        \end{tabular}
+        \caption{N-Gram Experiment Confusion Matrix.}
+        \label{tab:ngram-experiment-cm}
+    \end{center}
+\end{table}
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{l|ccc}
+            Label & Precision & Recall & F1-score \\
+            \hline
+            equal & 0.361 & 0.261 & 0.293 \\
+            contains & 0.113 & 0.148 & 0.119 \\
+            contained-in & 0.224 & 0.186 & 0.18 \\
+        \end{tabular}
+        \caption{N-Gram Experiment Precision, Recall, and F1-score.}
+        \label{tab:ngram-experiment-evaluation}
+    \end{center}
+\end{table}
+
+We also ran this setup for the Levenshtein-similarity and the Path-similarity models, but it did not affect the
+F1-scores for them.
+We also decided to not use this optimization for the results presented in Chapter~\ref{ch:experiment-results},
+because it came as a result of our evaluation.
+Since this is a special optimization for one single method, it would make the results less comparable than using the
+generic implementation.
+
+Overall we see that the N-Gram-similarity produces competitive results, especially in predicting equality.
+Integrating the optimization, we found as part of this Section also improves the result for \emph{contained-in} significantly.
+We think that the N-Gram-similarity already provides a tough baseline that we can use to evaluate further algorithms and
+could also assist a human annotator in the task of taxonomy matching.
+
+\subsection{Path Similarity}
+
+The path similarity methods diverge from their base similarity functions in the factor that they compare individual
+categories instead of the full class-label.
+This enables them to weight the hierarchy levels differently.
+During the training, we saw that the hyperparameter learned values for lambda, the weight of the lower category vs.\@ the rest,
+between 0.2 and 0.5, and most of the time settled for 0.3.
+We did not observe any differences between  the Levenshtein and the N-Gram variant.
+The parameter choice says that the similarity of the categories at the lower level makes up 30 percent of the total similarity,
+the category pair on the second-lowest level 21 percent, and so on.
+This factor already indicates that a high similarity of the bottom-categories does not directly translate to overall
+equality of the class-label pair.
+
+The high  weight on the remaining categories should also explain why the artificial edge-cases show up as false positives
+again.
+For both, Levenshtein- and N-Gram-Path-similarity, the corner cases make up most of the false positives.
+
+The second thing we notice is that the N-Gram-Path-similarity can not reproduce the good results we recorded for the
+N-Gram-similarity, especially the variant we presented in this Chapter.
+We assume that the advantages of the set-based approach that is inherent to the N-Gram-similarity are lost when it is
+only applied to a single category pair.
+
+To support this hypothesis, we will revisit the first example in Table~\ref{tab:levenshtein-error4}.
+The path-distance version compares "Mirrorless Cameras" with itself, then compare "Digital Cameras" to "Cameras \&
+Camcorders", and, finally, "Electronics" to "Cameras \& Camcorders".
+On the  other hand, the standard N-Gram-similarity would also detect the high overlap between the "Cameras \& Camcorders"
+categories, because it operates globally.
+
+Overall the path-similarity measure slightly improves the F1-score for \emph{contains} and \emph{contained-in} for the Levenshtein
+based model.
+With regards to the N-Gram-similarity, we do not see an advantage in using the path similarity approach.
+On the contrary, it actually reduces the effectiveness compared to the globally applied N-Gram-similarity.
+
+Out of the baseline methods presented above, only the N-Gram-similarity did surprise us positively.
+Its set-based approach avoids fallacies inherent to the hierarchical nature of the class-labels under consideration.
+The Levenshtein- and Path-similarity models have a focus that is to narrow to effectively predict the class-label
+pairs.
+
+\section{WordNet-Based Matching Methods}
+
+\subsection{S-Match}
+
+S-Match is one of two models we investigated that use WordNet to find word senses and detect synonyms to improve
+the taxonomy matching logic.
+Its performance is among the worst of all models we tested, especially for the \emph{equal} class-label pairs.
+There are only seven true positives.
+Since we observe similar low scores for the predictions on our dataset with SCHEMA, the second WordNet-based method,
+an obvious hypothesis is that WordNet does not cover most words in our corpus.
+This  would explain why they struggle with the given dataset.
+For S-Match, we use two ways to check this hypothesis.
+First, we look  at the small number of true positives and look for a pattern and, second, we tokenize our
+corpus and check how many of the distinct words in there yield a result in the WordNet dictionary.
+
+The first thing we observe for the class-label pairs that are \emph{equal} and are predicted as such is that they are in the
+clothing domain and use simple, common words.
+Examples are given in Table~\ref{tab:smatch-correct} (first part).
+This is similar for \emph{contains} and \emph{contained-in}, which are shown in the second and third part of Table~\ref{tab:smatch-correct}, respectively.
+Surprisingly the last example from Table~\ref{tab:levenshtein-error4} which was misclassified by the Levensthein- and
+N-Gram-similarity received the correct label by S-Match.
+The examples we have looked at confirm that S-Match likely handles simple class labels with good coverage in WordNet
+best.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Clothing \& Accessories $>$ Men $>$ Jeans \\
+            right & Clothing $>$ Mens Clothing $>$ Mens Jeans $>$ Mens Jeans \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Women $>$ Clothing $>$ Dresses \\
+            right & Clothing, Shoes \& Accessories $>$ Women $>$ Women's Clothing $>$ Dresses \\
+            \hline
+            \hline
+            left & Sports \& Outdoors $>$ Sports \& Fitness $>$ Golf \\
+            right & Sports \& Outdoors $>$ Sports $>$ Golf Equipment $>$ Golf Shirts \\
+            \hline
+            left & Audio $>$ Home Audio $>$ Speakers $>$ In-Wall \& In-Ceiling Speakers \\
+            right & Electronics $>$ Home Audio \& Theater $>$ Home Audio $>$ All Home Speakers $>$ In-Wall and In-Ceiling Speakers $>$ In-Ceiling Speakers \\
+            \hline
+            \hline
+            left & Electronics $>$ Camera \& Photo $>$ Digital Cameras $>$ DSLR Cameras \\
+            right & Cameras \& Photo $>$ Digital Cameras \\
+            \hline
+            left & Baby $>$ Feeding $>$ Bibs \& Burp Cloths $>$ Bibs \\
+            right & Baby $>$ Feeding $>$ Bib \& Burp Cloth Sets \\
+        \end{tabularx}
+        \caption{S-Match: Examples for True Positive Class-Label Pairs.}
+        \label{tab:smatch-correct}
+    \end{center}
+\end{table}
+
+Next, we checked the WordNet coverage of the gold standard we have used.
+We split all class-labels into their individual categories and then split words and composite categories.
+This results in a set of individual words per class-label.
+We union all of those sets and retain only words with a length greater than  two to reduce noise.
+This results in a set of 1513 different words that make up our complete gold standard.
+For each of those, we perform a check if at least one synset, i.e., a set of synonyms, is returned by WordNet.
+Out of the 1513 words, 1261 are contained in WordNet.
+Hence, about 83 percent of our corpus yields a result.
+We did also perform this check using the total word count (including repetitions) instead of sets and yield a
+similar result.
+Due to the good coverage of WordNet, we have to reject the second hypothesis.
+The underwhelming results are not caused by a lack of matches in the external corpus.
+
+In summary, we would not recommend the usage of S-Match for taxonomy matching.
+As Giunchiglia et al.\@~\cite{giunchiglia2005semantic} state in their conclusion, matching errors at
+higher levels, propagate down.
+The depth of the class-labels in our gold standard may increase the errors S-Match makes.
+To put that into perspective, we compared our class-labels with the GPC\@.
+It uses a maximum of three layers, while most of the class-labels in our gold standard have four or more layers,
+as we can see in Figure~\ref{fig:depth-distribution}.
+
+\subsection{SCHEMA}
+
+The results for SCHEMA are similar to the results of S-Match with a slight advantage for SCHEMA with regard to the recall.
+In contrast to S-Match, which was used as intended with code provided by the authors, we used a subset of the SCHEMA
+algorithm to make it applicable to the problem at  hand.
+The parts we use should identify possible matches and should be followed by another ranking algorithm to select the best match
+among them.
+Hence, we would expect false positives, but almost no false negatives.
+
+Since we have ruled out the influence of a low WordNet coverage in the previous Section, we will focus on the reason
+for the small number of positive predictions in combination with the  fact that about 50 percent of the positive class-label
+pairs are labelled as \emph{disjoint}.
+
+For the correctly classified \emph{equal} class-labels, we observe that there are only two examples where the lowest categories
+of the class-label pair do not match perfectly.
+Those are given in Table~\ref{tab:schema-correct}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Cell Phones \& Accessories $>$ Accessories $>$ Virtual Reality Headsets \\
+            right & Consumer Electronics $>$ Virtual Reality $>$ Smartphone VR Headsets \\
+            \hline
+            left & Electronics $>$ Car \& Vehicle Electronics $>$ Vehicle Electronics Accessories $>$ Radar Detectors \\
+            right & Consumer Electronics $>$ Vehicle Electronics \& GPS $>$ Radar \& Laser Detectors \\
+        \end{tabularx}
+        \caption{SCHEMA: Examples for True Positive Class-Label Pairs.}
+        \label{tab:schema-correct}
+    \end{center}
+\end{table}
+
+Those do not seem to be challenging and are also labelled correctly by all of our baseline methods.
+The \emph{equal} class-label pairs that are predicted as \emph{disjoint} look in fact very similar, as we can see in Table~\ref{tab:schema-error}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Electronics $>$ Camera \& Photo $>$ Digital Cameras $>$ Mirrorless Cameras \\
+            right & Cameras \& Camcorders $>$ Digital Cameras $>$ Mirrorless Cameras \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Women $>$ Clothing $>$ Dresses \\
+            right & Clothing, Shoes \& Accessories $>$ Women $>$ Women's Clothing $>$ Dresses \\
+        \end{tabularx}
+        \caption{SCHEMA: Examples for False Negative Class-Label Pairs.}
+        \label{tab:schema-error}
+    \end{center}
+\end{table}
+
+The problem is that the algorithm expects that the full extended split term set of the left category is a subset
+of the right one.
+This rarely happens.
+If we loosen up this restriction and require only a partial match between the left and the right category, we arrive
+at the improved results for SCHEMA that we present in Table~\ref{tab:schema-experiment-cm} and Table~\ref{tab:schema-experiment-evaluation}.
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{r|cccc}
+            & e & c & ci & d \\
+            \hline
+            e & 204 & 5 & 12 & 20 \\
+            c & 147 & 25 & 16 & 69 \\
+            ci & 119 & 14 & 7 & 101 \\
+            d & 1243 & 80 & 75 & 3647 \\
+        \end{tabular}
+        \caption{SCHEMA Experiment Confusion Matrix.}
+        \label{tab:schema-experiment-cm}
+    \end{center}
+\end{table}
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{l|ccc}
+            Label & Precision & Recall & F1-score \\
+            \hline
+            equal & 0.075 & 0.507 & 0.128 \\
+            contains & 0.077 & 0.036 & 0.047 \\
+            contained-in & 0.033 & 0.018 & 0.023 \\
+        \end{tabular}
+        \caption{SCHEMA Experiment Precision, Recall, and F1-score.}
+        \label{tab:schema-experiment-evaluation}
+    \end{center}
+\end{table}
+
+With a more optimistic matcher, the F1-score on the \emph{equal} label improves significantly and achieves the best recall
+for all models.
+Unfortunately, this reduces the capability of detecting containment even further.
+
+In conclusion, we can say that SCHEMA does not handle the semantic taxonomy matching task well.
+With a slight modification, it may become useful as an input for another classifier, since it is good at predicting
+if a pair is related at all, without specifying the exact label.
+
+\section{Supervised Taxonomy Matching Methods}
+
+\subsection{Ontology Matching with Word Embeddings}
+
+The embedding model encodes each class-label with word2vec and uses Cosine similarity to compare the resulting vectors.
+For such a simple method, it provides surprisingly accurate predictions and also has a low number of false negatives.
+The large number of false positives is again due to the artificial corner-cases that are mostly classified as either
+\emph{contains} or \emph{contained-in}.
+
+Our interpretation is that the vectorization produces a similar global view as the set-based N-Gram-similarity algorithm
+and the mapping into a vector space detects semantic similarity if distinct vocabularies are used, e.g., when
+comparing "Kids" and "Children".
+
+Overall the embedding approach has one of the lowest numbers of false negatives and could be useful as a first filter
+to exclude the majority of negative class-label pairs.
+
+\subsection{AdaBoost}
+
+Both types of the AdaBoost classifier, the  one using the CountVectorizer and the other using word2vec embeddings,
+achieve comparable results as presented in the previous Chapter.
+The classifier is based on a combination of decision trees and aggregates the results of the individual models to make a
+prediction.
+
+We would have expected that the same model, on the same data, with similar results would imply that both variants
+make similar predictions, but surprisingly they diverge quite heavily.
+Only 2463 out of 5784 predictions of both models are the same.
+Out of those 2463 overlapping predictions, 2185 are for \emph{disjoint} class-label pairs.
+Even though the models seem very similar, they seldom agree in their prediction.
+
+One drawback of machine learning methods is that we lack the ability to intuitively explain their predictions.
+Everything between the input class-label pair and the output label is a black box.
+
+We will present some examples for true- and false positives for both variants and try to explain the influence of the
+embedding method on the prediction.
+Table~\ref{tab:adaboost-tp} includes true positives for \emph{equal} class-labels pairs.
+The first part of the table uses the BoW model and the second part the word2vec embeddings.
+In Table~\ref{tab:adaboost-fn} we present false negatives for \emph{equal} class-label pairs and follow the same layout.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Computers \& Tablets $>$ Monitors $>$ All Monitors \\
+            right & Computers/Tablets \& Networking $>$ Monitors, Projectors \& Accs $>$ Monitors \\
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Girls $>$ Watches \\
+            right & Jewelry $>$ Watches $>$ Kids Watches $>$ Girls Watches \\
+            \hline
+            left & Electronics $>$ Car \& Vehicle Electronics $>$ Car Electronics $>$ Car Audio $>$ Speakers \\
+            right & Consumer Electronics $>$ Vehicle Electronics \& GPS $>$ Car Audio $>$ Car Speakers \& Speaker Systems \\
+            \hline
+            \hline
+            left & Electronics $>$ Car \& Vehicle Electronics $>$ Vehicle Electronics Accessories $>$ Radar Detectors \\
+            right & Consumer Electronics $>$ Vehicle Electronics \& GPS $>$ Radar \& Laser Detectors \\
+            \hline
+            left & Electronics $>$ Camera \& Photo $>$ Digital Cameras $>$ Mirrorless Cameras \\
+            right & Cameras \& Camcorders $>$ Digital Cameras $>$ Mirrorless Cameras \\
+        \end{tabularx}
+        \caption{AdaBoost: Examples for True Positive Class-Label Pairs.}
+        \label{tab:adaboost-tp}
+    \end{center}
+\end{table}
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Car Electronics \& GPS $>$ Car Audio $>$ Car Speakers \\
+            right & Auto \& Tires $>$ Auto Electronics $>$ Car Speakers $>$ Car Speakers \\
+            \hline
+            left & Home $>$ Apparel \& Accessories $>$ Watches $>$ Watches $>$ Tissot \\
+            right & Jewelry $>$ Watches $>$ Luxury Watches $>$ Tissot Watches \\
+            \hline
+            left & Electronics $>$ Headphones \\
+            right & Audio $>$ Headphones $>$ All Headphones \\
+            \hline
+            \hline
+            left & Clothing, Shoes \& Jewelry $>$ Girls $>$ Watches \\
+            right & Jewelry $>$ Watches $>$ Kids Watches $>$ Girls Watches \\
+            \hline
+            left & Home \& Kitchen $>$ Kitchen \& Dining $>$ Kitchen \& Table Linens $>$ Kitchen Rugs \\
+            right & Home $>$ Decor $>$ Rugs $>$ Kitchen Rugs \\
+            \hline
+            left & Electronics $>$ Portable Audio \& Video $>$ Portable DVD Players \\
+            right & TV \& Home Theater $>$ Blu-ray \& DVD Players $>$ Portable DVD Players \\
+        \end{tabularx}
+        \caption{AdaBoost: Examples for False Negative Class-Label Pairs.}
+        \label{tab:adaboost-fn}
+    \end{center}
+\end{table}
+
+The third example in Table~\ref{tab:adaboost-tp} is predicted correctly by both variants, but all other examples
+did receive contradicting labels by AdaBoost.
+Given the examples presented here and additional examples from our experiments, we could not find any explanation
+on the different true positive predictions.
+The same holds true for the examples in Table~\ref{tab:adaboost-fn}.
+Except for the second example from the top, both variants disagree on the predicted label.
+Also, we could not find a reasonable explanation why those apparently obvious matches are labelled as \emph{disjoint} by
+the respective algorithm.
+
+All-in-all AdaBoost  gives mediocre results that are hard to explain.
+It behaves very differently depending on the encoding of the class-label pairs.
+We would not recommend the usage of AdaBoost in either variant for taxonomy matching, because it
+delivers predictions that are hard to interpret without compensating this with outstanding results.
+
+\subsection{Naive Bayes}
+
+Naive Bayes is a simple machine learning algorithm that is frequently used as a baseline whenever classification is
+the objective.
+Scikit-learn also recommends to try Naive Bayes in combination with the
+CountVectorizer\footnote{\url{https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.MultinomialNB.html}. Accessed: 01.05.2020}.
+It also has the advantage that it does not require a complex hyperparameter search, because it simply looks
+at the given examples to infer a posterior distribution to make predictions on previously unseen data.
+
+We do not see any obvious problems in the confusion matrix and the precision, recall, and F1-scores of Naive Bayes.
+There are about twice as many \emph{equal} labelled false positives than for the \emph{contains} and \emph{contained-in} labels, so we will
+take a look at some examples for those three cases and  try to derive some conclusions.
+In the same manner, we will look at false negatives.
+
+Examples of false positives are given in Table~\ref{tab:naive-bayes-fp}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Electronics $>$ Computers \& Accessories $>$ Tablet Accessories $>$ Bags, Cases \& Sleeves $>$ Cases \\
+            right & Jewelry $>$ Watches $>$ Designer Watches $>$ Guess Watches \\
+            \hline
+            left & Electronics $>$ Computers \& Accessories $>$ Data Storage $>$ Internal Solid State Drives \\
+            right & Electronics $>$ TV \& Video $>$ TV Accessories $>$ TV Antennas \\
+            \hline
+            left & Electronics $>$ Home Audio $>$ Speakers $>$ Floorstanding Speakers \\
+            right & Electronics $>$ Home Audio $>$ Speakers $>$ Outdoor Speakers \\
+        \end{tabularx}
+        \caption{Naive Bayes: Examples for False Positive Class-Label Pairs.}
+        \label{tab:naive-bayes-fp}
+    \end{center}
+\end{table}
+Some errors stem from the generated corner-cases, but  Naive Bayes is better than the string-based baselines methods
+in labelling those correctly.
+The other group of errors seems completely arbitrary.
+One reason for this behavior may be the  independence assumption in Naive Bayes.
+It states that all input variables are expected to be conditionally independent.
+In our case, it may be possible that Naive Bayes only learns that a specific word in the left or right class-label
+indicates equality and another word containment, and so on.
+Therefore, Naive Bayes never takes the relationship between the two class-labels into account.
+Following this  assumption, it would output a combination of the likelihood that the left and the right label usually have
+a specific relationship with other labels.
+
+We observe a similar behavior for the false negatives that we present in Table~\ref{tab:naive-bayes-fn}.
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabularx}{\textwidth}{lX}
+            & Class-Label \\
+            \hline
+            left & Sports \& Outdoors $>$ Sports \& Fitness $>$ Golf \\
+            right & Sports \& Outdoors $>$ Sports $>$ Golf Equipment $>$ Golf Shirts \\
+            \hline
+            left & Home, Furniture \& Office $>$ Furniture \& Decor $>$ Clocks \\
+            right & Home $>$ Decor $>$ Clocks \\
+        \end{tabularx}
+        \caption{Naive Bayes: Examples for False Negative Class-Label Pairs.}
+        \label{tab:naive-bayes-fn}
+    \end{center}
+\end{table}
+
+In addition to the drawback mentioned above, it is impossible
+to reuse the existing model in another domain, e.g., Food, with the closed vocabulary that we use for training.
+Transferring it would require an additional set of labelled training data in the new domain.
+
+Overall we see good results for Naive Bayes on the given training set, but we identified two possible limitations for
+any real-world usage.
+The closed vocabulary prohibits an application in a new domain without additional training data, and the independence
+assumption indicates that the likelihood is based on individual keywords instead of the relation between the two
+class-labels.
+
+\subsection{Stochastic Gradient Descent}
+
+The  SGDClassifier uses an SVM model and trains it with SGD\@.
+In contrast to the AdaBoost models, the word2vec embedding enables substantially better predictions compared to the
+results based on the CountVectorizer.
+According to the documentation of the SGDClassifier, it supports sparse (CountVectorizer) and dense (word2vec)
+vectors as inputs.
+Hence, both types of encodings are supported equally well.
+The other differentiating factor between the two encodings is the vector dimension.
+While the word2vec model uses 300 dimensions, the CountVectorizer produces a sparse vector with the vocabulary size,
+i.e., more than 2000 dimensions.
+
+Since SVM classifiers try to find an optimal hyperplane to separate the training examples, the algorithm may
+perform worse on higher dimensional vectors, since it becomes harder to find a suitable decision boundary.
+We may improve the CountVectorizer results with additional training examples, but we expect that the benefit will be small.
+
+The word2vec approach has the additional advantage of a broader vocabulary.
+We could use the given model to make predictions in any domain that is covered by the Googe-News dataset that was used to
+train the word2vec model.
+Hence, we will focus on the word2vec based predictions in the remainder of this Subsection.
+
+Since we also observe a high number of false positives for the word2vec based model, we would assume that this is due to
+the artificial corner cases.
+Contrary to our expectation, the majority of false positives are obviously \emph{disjoint}, e.g., with one class-label being in
+the "Electronics" and the other being in  the  "Clothing" domain.
+
+Following up on our conclusions from the Levenshtein- and N-Gram-similarity, which had problems with artificial edge-cases,
+we would like to try a two-phased approach for taxonomy matching.
+A string-based method with a low threshold could be  used to filter the obviously \emph{disjoint} pairs.
+Since the SGD model performs well on actual positive labels and artificial edge-cases, we would expect better results than
+with one of the standalone models.
+
+To verify this hypothesis, we replaced all SGD predictions with \emph{disjoint} if the Levenshtein-similarity did not exceed 0.3.
+We also tested 0.2 and 0.4 as thresholds and found  that 0.3 gave the best average F1-score.
+The prediction, recall, and  F1-score are given in Table~\ref{tab:sgd-experiment-evaluation} and the confusion matrix
+in Table~\ref{tab:sgd-experiment-cm}.
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{l|ccc}
+            Label & Precision & Recall & F1-score \\
+            \hline
+            equal & 0.081 & 0.208 & 0.112 \\
+            contains & 0.051 & 0.094 & 0.061 \\
+            contained-in & 0.126 & 0.212 & 0.156 \\
+        \end{tabular}
+        \caption{SGD Experiment Precision, Recall, and F1-score.}
+        \label{tab:sgd-experiment-evaluation}
+    \end{center}
+\end{table}
+
+\begin{table}[htbp]
+    \begin{center}
+        \begin{tabular}{r|cccc}
+            & e & c & ci & d \\
+            \hline
+            e & 83 & 23 & 35 & 100 \\
+            c & 35 & 38 & 20 & 164 \\
+            ci & 39 & 10 & 76 & 116 \\
+            d & 437 & 379 & 278 & 3951 \\
+        \end{tabular}
+        \caption{SGD Experiment Confusion Matrix.}
+        \label{tab:sgd-experiment-cm}
+    \end{center}
+\end{table}
+
+While the number of false positives decreases significantly, we also lose some true positives.
+Adding this restriction, therefore, increases overall prediction accuracy, but results in a slight decline of
+recall.
+
+The word2vec based SGD model successfully predicts most of our artificial edge cases correctly and outperforms the
+AdaBoost model.
+It could be used on its own or be combined with the Levenshtein-similarity to trade-off recall for additional accuracy.
+
+\subsection{Multi-Layer Perceptron}
+
+As we have stated in the previous Chapter, the Neural Network had convergence issues, which are probably due to an
+insufficient amount of training data.
+We also tried smaller networks, but the issue persisted.
+In addition, we trained the model on the full, noisy dataset that we extracted from the Semantic Web and labelled based
+on shared instances, but  this did not improve the results.
+We also saw that the instance-based approach produced multiple misclassifications among the positive labels, especially
+for class-label that contain many products on one e-commerce platform, but less on another.
+Hence, the only way to improve this model is to provide more manually annotated data.
+
+On the other hand, we would be curious about how the given model would perform in a new domain, e.g., Food, without
+training it on examples in this domain.
+Unfortunately, we lack a dataset for evaluating those.
+Using either the Clothing or the Electronics data in our corpus for training the model and testing it on the other
+data would not give reliable results for this experiment, because the amount of training data would be far too small.
+
+Overall the neural network makes good predictions given the training data, but we would like to explore in the future
+how it performs in a new domain and if additional data would lead to significant improvements of the predictions.
+
+\section{Summary}
+
+In this Chapter we analyzed the errors that the tested models make and gave examples for cases that could be considered
+easy and for cases where the models struggle to make the correct prediction.
+At the end of each Subsection, we gave a recommendation for suitable use cases of the given model.
+
+Overall the N-Gram-similarity and the word2vec embeddings with Cosine similarity have a good recall, and a comparatively
+good F1-score.
+They would certainly be helpful as an input for a human annotator, but are not precise enough for a standalone application.
+
+The Neural Network did provide a good overall accuracy, but would benefit from additional training data.
+It would also be interesting to check if the embedding models (AdaBoost, SGD, and MLP) generalize to new domains
+without additional training, but we leave this for future work.
+
+In our interpretation, we were also limited by the lack of explainable predictions for machine learning models.
+In the current form, they can only serve as a black box.
+It would aid the interpretability of the predictions if there were tools available that explain the internal
+behavior of a given model.

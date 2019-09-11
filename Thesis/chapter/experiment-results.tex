@@ -1,0 +1,441 @@
+\chapter{Experiment Results}
+\label{ch:experiment-results}
+
+The content of this Chapter is the evaluation of the taxonomy matching algorithms.
+We will use the algorithms described in Chapter~\ref{ch:taxonomy-matching} on our dataset
+from Chapter~\ref{ch:dataset-creation} and report the results.
+This Chapter focuses on the raw data and a description of the experiments and the coming
+Chapter~\ref{ch:error-analysis} analyzes possible misclassifications of some algorithms in more detail
+and also discusses those results.
+
+Certain metrics are considered important when evaluating an algorithm.
+We are interested in the overall precision, recall, and F1-score, i.e., how many class-label pairs are correctly classified
+and how many positive tuples we missed.
+
+The F1-score and precision and recall are usually considered for binary classification problems,
+especially if the classes are imbalanced.
+Since our problem is a multi-label classification problem, we compute the precision, recall, and F1-score for
+each class and report them individually.
+For the hyperparameter tuning, we use an unweighted average of the F1-score of the positive labels.
+This is called the macro-F1-score.
+
+In general, we consider it more relevant to detect a relationship between two categories, meaning that
+a misclassification between \emph{equal}, \emph{contains}, and \emph{contained-in} should be preferred over a \emph{disjoint}
+label since those are under-represented.
+Even if we return a certain number of false positives, i.e., disjoint pairs labelled as \emph{equal}, \emph{contains},
+or \emph{contained-in}, the workload for a human to reclassify them would be greatly reduced, compared to complete
+manual labelling.
+
+This is also the approach taken by Park and Kim~\cite{park2007ontology} who accept a loss of precision for
+higher recall.
+
+The confusion matrices in this Chapter follow the conventions of scikit-learn.
+"By definition a confusion matrix $C$ is such that $C_{i,j}$ is equal to  the number of observations
+known to be in group $i$ and predicted to be in group $j$"\footnote{\url{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html.
+Accessed: 01.05.2020}}.
+We will illustrate this using the confusion matrix for the Levenshtein-similarity in Table~\ref{tab:levenshtein-cm}.
+Along the diagonal from top-left to bottom-right, we find all true positives, i.e., the number of cases where the true
+label is predicted.
+The value 91 in cell $C_{2,1}$ indicates that 91 \emph{contains} labels are mistakenly predicted as \emph{equal}.
+
+This Chapter will follow the same structure as Chapter~\ref{ch:taxonomy-matching}.
+We will start with the baseline method evaluations and move on to the advanced unsupervised and supervised models.
+
+The precision, recall, and F1-score per method are shown in Tables~\ref{tab:equal-results},~\ref{tab:contains-results},
+and~\ref{tab:contained-in-results}.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{l|ccc}
+   Method & Precision & Recall & F1-score \\
+   \hline
+   Levenshtein & 0.038 & 0.34 & 0.067 \\
+   N-Gram & 0.341 & 0.26 & 0.288 \\
+   Levenshtein (PD) & 0.035 & 0.41 & 0.064 \\
+   N-Gram (PD) & 0.055 & 0.386 & 0.083 \\
+   SCHEMA & 0.105 & 0.091 & 0.086 \\
+   Embedding CSS & 0.147 & 0.378 & 0.207 \\
+   AdaBoost BoW & 0.049 & 0.177 & 0.073 \\
+   Naive Bayes & 0.067 & 0.238 & 0.103 \\
+   SGD BoW & 0.088 & 0.094 & 0.08 \\
+   S-Match & 0.051 & 0.014 & 0.021 \\
+   AdaBoost Embedding & 0.044 & 0.169 & 0.068 \\
+   SGD Embedding & 0.069 & 0.219 & 0.101 \\
+   MLP & 0.206 & 0.162 & 0.177 \\
+  \end{tabular}
+  \caption{Precision, Recall, and F1-score for Equal Label.}
+  \label{tab:equal-results}
+ \end{center}
+\end{table}
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{l|ccc}
+   Method & Precision & Recall & F1-score \\
+   \hline
+   Levenshtein & 0.065 & 0.017 & 0.09 \\
+   N-Gram & 0.112 & 0.149 & 0.119 \\
+   Levenshtein (PD) & 0.264 & 0.169 & 0.188 \\
+   N-Gram (PD) & 0.16 & 0.128 & 0.128 \\
+   SCHEMA & 0.049 & 0.067 & 0.048 \\
+   Embedding CSS & 0.046 & 0.245 & 0.086 \\
+   AdaBoost BoW & 0.035 & 0.067 & 0.043 \\
+   Naive Bayes & 0.091 & 0.141 & 0.102 \\
+   SGD BoW & 0.079 & 0.077 & 0.066 \\
+   S-Match & 0.036 & 0.026 & 0.028 \\
+   AdaBoost Embedding & 0.04 & 0.089 & 0.051 \\
+   SGD Embedding & 0.052 & 0.12 & 0.068 \\
+   MLP & 0.085 & 0.045 & 0.054 \\
+  \end{tabular}
+  \caption{Precision, Recall, and F1-score for Contains Label.}
+  \label{tab:contains-results}
+ \end{center}
+\end{table}
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{l|ccc}
+   Method & Precision & Recall & F1-score \\
+   \hline
+   Levenshtein & 0.077 & 0.198 & 0.109 \\
+   N-Gram & 0.016 & 0.183 & 0.03 \\
+   Levenshtein (PD) & 0.321 & 0.228 & 0.258 \\
+   N-Gram (PD) & 0.24 & 0.205 & 0.207 \\
+   SCHEMA & 0.042 & 0.078 & 0.053 \\
+   Embedding CSS & 0.054 & 0.245 & 0.086 \\
+   AdaBoost BoW & 0.096 & 0.176 & 0.111 \\
+   Naive Bayes & 0.114 & 0.223 & 0.144 \\
+   SGD BoW & 0.13 & 0.17 & 0.138 \\
+   S-Match & 0.072 & 0.1 & 0.08 \\
+   AdaBoost Embedding & 0.082 & 0.18 & 0.107 \\
+   SGD Embedding & 0.121 & 0.267 & 0.163 \\
+   MLP & 0.281 & 0.208 & 0.228 \\
+  \end{tabular}
+  \caption{Precision, Recall, and F1-score for Contained-In Label.}
+  \label{tab:contained-in-results}
+ \end{center}
+\end{table}
+
+\section{Baseline Methods}
+
+\subsection{Levenshtein- or Edit-Similarity}
+
+The Levenshtein-similarity is one of the simplest approaches for taxonomy matching and, therefore, we expect
+mediocre results.
+It has one of the highest results for true positives with regard to the \emph{equal} label with 143 out of 241 labels being
+predicted correctly.
+This is also reflected in the recall of 0.34.
+This, comparatively, good recall comes with low precision, though.
+2,180 actual disjoint labels were predicted as \emph{equal}.
+In general, we observe a high number of false positives with the  Levenshtein-similarity.
+3370 out of 5045 disjoint labels received a positive label.
+On the other hand, 109 out  of 739 positive examples are labelled as disjoint.
+Table~\ref{tab:levenshtein-cm} contains the  full confusion matrix.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+     & e & c & ci & d \\
+     \hline
+     e & 143 & 43 & 37 & 18 \\
+     c & 91 & 93 & 31 & 42 \\
+     ci & 68 & 49 & 75 & 49 \\
+     d & 2180 & 646 & 544 & 1675 \\
+  \end{tabular}
+  \caption{Levenshtein Confusion Matrix.}
+  \label{tab:levenshtein-cm}
+ \end{center}
+\end{table}
+
+\subsection{N-Gram-Similarity}
+
+According to the F1-Score, the N-Gram-similarity model is the best for predicting the \emph{equal} label and among the best for
+\emph{contains}.
+Only \emph{contained-in} has a very low precision due to a high number of false positives.
+Again, about 3000 negatives received a positive label, but those cases are more concentrated among the \emph{contains}/\emph{contained-in}
+label, with the latter making up the majority.
+The full confusion matrix is shown in Table~\ref{tab:ngram-cm}.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 101 & 71 & 46 & 23 \\
+   c & 32 & 93 & 69 & 63 \\
+   ci & 33 & 90 & 73 & 45 \\
+   d & 30 & 259 & 2679 & 2077 \\
+  \end{tabular}
+  \caption{N-Gram Confusion Matrix.}
+  \label{tab:ngram-cm}
+ \end{center}
+\end{table}
+
+\subsection{Path Similarity}
+
+The result for the path-similarity metric based on the Levenshtein-similarity is very similar for the \emph{equal} label, but
+the path similarity significantly outperforms the Levenshtein-similarity for \emph{contains} and \emph{contained-in}.
+For both of those labels, it ranks among the best approaches.
+As with the Levenshtein-similarity, we observe a high number (2707) of disjoint labels that received an \emph{equal} label.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 161 & 34 & 24 & 22 \\
+   c & 84 & 89 & 14 & 70 \\
+   ci & 67 & 28 & 88 & 58 \\
+   d & 2707 & 203 & 127 & 2008 \\
+  \end{tabular}
+  \caption{Levenshtein Path Distance Confusion Matrix.}
+  \label{tab:levenshtein-pd-cm}
+ \end{center}
+\end{table}
+
+The surprisingly good F1-score for the \emph{equal} label with the N-Gram-similarity are not replicated with the
+path distance similarity based on  the N-Gram-similarity.
+Instead, the precision, recall, and F1-score are close to, but slightly better, to both Levenshtein approaches.
+The path distance F1-score on the \emph{contains} label is slightly better than with  pure N-Gram-similarity, and the F1-score
+for \emph{contained-in} outperforms the basic N-Gram-similarity significantly.
+This is due to a high difference in the precision of 0.224.
+The high number of misclassified disjoint labels that we observed for \emph{contained-in} labels with the standard N-Gram-similarity
+shifted to the \emph{equal} label.
+This shift also explains the decline in the F1-score for the \emph{equal} label.
+See Table~\ref{tab:levenshtein-pd-cm} and~\ref{tab:ngram-pd-cm} for the path-distance based on Levenshtein
+and on N-Gram, respectively.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 147 & 26 & 35 & 33 \\
+   c & 94 & 50 & 26 & 87 \\
+   ci & 74 & 17 & 83 & 67 \\
+   d & 2154 & 146 & 185 & 2560 \\
+  \end{tabular}
+  \caption{N-Gram Path Distance Confusion Matrix.}
+  \label{tab:ngram-pd-cm}
+ \end{center}
+\end{table}
+
+\section{WordNet-Based Matching Methods}
+
+\subsection{S-Match}
+
+The semantic match algorithm introduced by Giunchiglia et al.~\cite{giunchiglia2005semantic} consistently ranks among
+the worst performers across all three positive labels.
+In the confusion matrix shown in Table~\ref{tab:smatch-cm} we can see that there is a strong tendency to label pairs as
+disjoint.
+Out of 739 actual positive labels, only 131 are labelled as such.
+That is before factoring in misclassifications among the positive labels.
+On the other hand, the number of disjoint pairs that are classified as positive is one of the lowest we observe.
+The accuracy would, therefore, be high, but, as we and other authors stated previously, the recall is the more important
+metric for product taxonomy matching.
+One surprising result is that neither \emph{contains} nor \emph{contained-in} pairs are classified as \emph{equal}.
+Although this might be due to the overall low number of \emph{equal} predictions.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 7 & 28 & 31 & 175 \\
+   c & 0 & 19 & 4 & 234 \\
+   ci & 0 & 2 & 40 & 199 \\
+   d & 55 & 250 & 232 & 4508 \\
+  \end{tabular}
+  \caption{S-Match Confusion Matrix.}
+  \label{tab:smatch-cm}
+ \end{center}
+\end{table}
+
+\subsection{SCHEMA}
+
+SCHEMA results are comparable to the ones of S-Match that we described in the previous Subsection.
+The algorithm assigns more positive labels overall, but the  precision, recall, and F1-scores are similar.
+Again, the accuracy would be high for the overall predictions.
+The confusion matrix for SCHEMA is shown in Table~\ref{tab:schema-cm}.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 33 & 56 & 25 & 127 \\
+   c & 11 & 41 & 32 & 173 \\
+   ci & 8 & 52 & 28 & 153 \\
+   d & 158 & 484 & 307 & 4096 \\
+  \end{tabular}
+  \caption{SCHEMA Confusion Matrix.}
+  \label{tab:schema-cm}
+ \end{center}
+\end{table}
+
+\section{Supervised Taxonomy Matching Methods}
+
+\subsection{Ontology Matching with Word Embeddings}
+
+Using word2vec together with Cosine similarity results in a comparatively high recall across all labels.
+No method we evaluated so far has shown good F1-scores across all three labels.
+For the \emph{equal} label, the embedding model also has a comparatively good precision leading to the second-best F1-score after the
+N-Gram-similarity.
+The confusion matrix for word embeddings with Cosine similarity is shown in Table~\ref{tab:embedding-css-cm}.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 153 & 26 & 44 & 18 \\
+   c & 40 & 74 & 83 & 60 \\
+   ci & 61 & 18 & 100 & 62 \\
+   d & 368 & 928 & 916 & 2833 \\
+  \end{tabular}
+  \caption{Embedding CS Confusion Matrix.}
+  \label{tab:embedding-css-cm}
+ \end{center}
+\end{table}
+
+\subsection{AdaBoost}
+
+The AdaBoost model based on  BoW vectors performs best for the \emph{contained-in} label according to the F1-score.
+It also shows good results for \emph{equal}- and \emph{contained-in} recall, but a high number of \emph{contains} pairs are misclassified.
+See Table~\ref{tab:adaboost-cm} for the confusion matrix.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 64 & 13 & 58 & 106 \\
+   c & 36 & 58 & 54 & 109 \\
+   ci & 58 & 36 & 74 & 73 \\
+   d & 822 & 675  & 921 & 2627 \\
+  \end{tabular}
+  \caption{AdaBoost BoW Confusion Matrix.}
+  \label{tab:adaboost-cm}
+ \end{center}
+\end{table}
+
+The results for AdaBoost based on word2vec embeddings is very close to the WordCount version, as we can see in the precision,
+recall, and F1-score, but also in the confusion matrix in Table~\ref{tab:adaboost-emb-cm}.
+It seems that the embedding algorithm only has a minor influence on this type of model.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 65 & 19 & 39 & 118 \\
+   c & 57 & 45 & 21 & 134 \\
+   ci & 55 & 20 & 68 & 98 \\
+   d & 870 & 692 & 594 & 2889 \\
+  \end{tabular}
+  \caption{AdaBoost Embedding Confusion Matrix.}
+  \label{tab:adaboost-emb-cm}
+ \end{center}
+\end{table}
+
+\subsection{Naive Bayes}
+
+The Naive Bayes model we trained on the CountVectorized class-labels achieves consistent scores for precision,
+recall, and F1-score across all positive labels.
+In the confusion matrix in Table~\ref{tab:naive-bayes-cm} we can see that about 75 percent of disjoint pairs are predicted
+correctly, putting the Naive Bayes model into the range of the WordNet-based models with regard to this.
+It outperforms them on all measures except for the precision on the \emph{equal} label, where SCHEMA has a better result.
+While the other models usually had two labels with similar results and one negative outlier, i.e., one label with a
+worse F1-score, Naive Bayes has a positive outlier.
+For the \emph{contained-in} label, it achieves a slightly higher precision than for the other two.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 96 & 8 & 37 & 100 \\
+   c & 33 & 53 & 35 & 136 \\
+   ci & 39 & 23 & 72 & 107 \\
+   d & 671 & 286 & 336 & 3752 \\
+  \end{tabular}
+  \caption{Naive Bayes Confusion Matrix.}
+  \label{tab:naive-bayes-cm}
+ \end{center}
+\end{table}
+
+\subsection{Stochastic Gradient Descent}
+
+The SGD models were also trained on the BoW and the word2vec embeddings.
+In contrast to the AdaBoost model, where both types of embeddings led to similar results, the word2vec embeddings
+outperform the BoW embeddings on the F1-score for all labels.
+For the \emph{equal} and \emph{contained-in} pairs, the word2vec model is about 10 percent better than the WordCount based model.
+This is due to a higher number of correctly predicted positive pairs, but there is also a slight incline of
+the number of false positives.
+The confusion matrices for the SGD models are presented in Tables~\ref{tab:sgd-cm}
+and~\ref{tab:sgd-emb-cm}.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 35 & 15 & 31 & 160 \\
+   c & 20 & 37 & 14 & 186 \\
+   ci & 20 & 11 & 63 & 147 \\
+   d & 408 & 446 & 345 & 3846 \\
+  \end{tabular}
+  \caption{SGD BoW Confusion Matrix.}
+  \label{tab:sgd-cm}
+ \end{center}
+\end{table}
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 88 & 24 & 35 & 94 \\
+   c & 41 & 50 & 26 & 140 \\
+   ci & 43 & 15 & 97 & 86 \\
+   d & 736 & 621 & 566 & 3122 \\
+  \end{tabular}
+  \caption{SGD Embedding Confusion Matrix.}
+  \label{tab:sgd-emb-cm}
+ \end{center}
+\end{table}
+
+\subsection{Multi-Layer Perceptron}
+
+The MLP shows good results for the \emph{equal} and \emph{contained-in} pairs.
+It also classifies more disjoint labels correctly than any other model in our experiments.
+During the experiments, we observed warnings that the model has not converged yet.
+The training set may be too small for the given network.
+Hence, the overall performance may improve with more training data.
+
+\begin{table}[htbp]
+ \begin{center}
+  \begin{tabular}{r|cccc}
+   & e & c & ci & d \\
+   \hline
+   e & 64 & 17 & 24 & 136 \\
+   c & 24 & 31 & 13 & 189 \\
+   ci & 18 & 8 & 78 & 137 \\
+   d & 123 & 194 & 154 & 4574 \\
+  \end{tabular}
+  \caption{MLP Confusion Matrix.}
+  \label{tab:mlp-cm}
+ \end{center}
+\end{table}
+
+\section{Summary}
+
+In this Chapter we presented the results of different taxonomy matching approaches on our gold standard.
+Simple setups like N-Gram- and Cosine-similarity on word2vec embeddings achieved good results in predicting
+if two class-labels are equal to each other.
+On the other hand, no model performed well in predicting if one class contains the other, while the more complicated models,
+read supervised machine learning, did a good job in predicting if one class is a subset of another.
+This comes as a surprise to us, because we assumed that the model should be able to predict if one class is more general or
+less general equally well.
+We will look at the specific errors of each individual model in the next Chapter and discuss the results that we have
+presented here.

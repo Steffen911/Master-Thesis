@@ -1,0 +1,76 @@
+\chapter{Summary and Future Work}
+\label{ch:summary}
+
+In this Chapter, we will review the main contributions and results of this Thesis.
+Afterwards, we will look at possible future extensions of the work presented here.
+
+In Chapter~\ref{ch:relevant-concepts} we gave a general introduction into the Semantic Web and the reasons behind
+its creation.
+We showed how annotations in the HTML-code can ensure that content that was created for humans becomes
+readable for machines.
+We also introduced the ideas behind ontology matching and, a special case of ontology matching, taxonomy matching.
+Taxonomy matching presents itself as especially useful in an e-commerce environments to enhance catalog integration
+tasks and product searches.
+
+Relevant contributions in the field of the Semantic Web, ontology matching, and product taxonomy matching are presented
+in Chapter~\ref{ch:related-work}.
+In  addition to  a description of the relevant methods, we designed a categorization system for product taxonomy matching
+algorithms in which we integrated the methods from Chapter~\ref{ch:related-work} and the ones used throughout this Thesis.
+
+To compare different methods for product taxonomy matching, we created a training dataset from product information
+that was crawled from the Semantic Web.
+We found that labels derived from shared instances have an overall low quality and are insufficient for reliable
+testing and, therefore, we manually annotated a subset of this training set to create a product
+taxonomy matching gold standard.
+The  result is a  set of class-label pairs from different e-commerce platforms that are labelled as either \emph{equal}, \emph{contains},
+\emph{contained-in}, or \emph{disjoint}.
+
+We described the methods that we test on this gold standard in Chapter~\ref{ch:taxonomy-matching}.
+This includes three major types of methods.
+The first group consists of static methods that only use the information given in the two class-labels that should be
+labelled.
+The algorithms in the second group are also static in the sense that they do not benefit from training data, but they include
+external corpora like WordNet to enhance their results.
+The last group consists of machine learning models that are trained on our training set and use the two class-labels
+as an input to make their predictions.
+
+Chapter~\ref{ch:experiment-results} dealt with the results of our experiments.
+For each method, we provided the precision, recall, and F1-score per positive label and the corresponding confusion
+matrix.
+
+In Chapter~\ref{ch:error-analysis} we analysed those results and tried to identify explanations for the phenomena
+we observed in the experiments.
+In doing so, we presented individual examples for class-label pairs that are either hard or easy to predict for a given algorithm and
+provide recommendations for cases where a certain algorithm may prove useful.
+Overall, we noticed that product taxonomy matching is a tough problem and no method provides fully satisfying
+results.
+Especially the added complexity of more advanced models is often not justified by a significant improvement over the
+baseline methods.
+
+The implementations we have used in order to replicate the results of relevant contributions on a real-world dataset
+follow the description of the authors as close as possible and we used open source packages where available.
+Nevertheless, we had to add small adjustments  to cater to our requirement of providing semantic annotations, i.e., detection
+of equality or if one class is more general than another.
+Only our machine learning models and S-Match~\cite{giunchiglia2005semantic} provide this functionality out of the box.
+However, those adjustments do not explain the overall bad performance of the models under consideration.
+
+Thus, as a part of this Thesis, we have identified two fields that deserve additional attention.
+
+First, all models across the literature require that the two taxonomies under consideration use similar concepts to
+label their products.
+We agree that this is a necessary requirement to detect equality or another semantic relationship, but we also found classes
+that share a set of products, but use orthogonal classification methods.
+An example may be a classification either by sport (Sports $>$ Golf $>$ Polo Shirts) or by brand (Sports $>$ Under Armour $>$ Polo Shirts).
+The two class-labels would certainly share some products, but do not fit any of the conventional semantic labels.
+Those partial overlaps can not be handled by any model that we are aware of.
+We detected those in our dataset based on shared instances, but it would be interesting to classify them based on the
+class-label alone.
+
+The second area is the semantic labelling of class-label pairs that we also covered in this Thesis.
+Most existing methods focus on finding the best match for a given class-label in a target taxonomy.
+While this certainly has a use case for catalog integration, the more generic solution could also enhance product
+search tasks and possibly more topics.
+
+In conclusion, we have seen that product taxonomy matching is a relevant problem with room for improvement.
+On  the one hand, we provided insights into the specific problem one faces with product taxonomies and,
+on the other hand, assist further research with the gold standard we created.
